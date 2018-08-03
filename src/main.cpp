@@ -89,6 +89,7 @@ uint64_t nPruneTarget = 0;
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool fEnableReplacement = DEFAULT_ENABLE_REPLACEMENT;
 //CBalanceViewDB *pbalancedbview = NULL;
+CRewardRateViewDB *prewardratedbview = NULL;
 
 struct EntrustInfo
 {
@@ -2059,6 +2060,35 @@ bool UpdateRewards(const CTransaction& tx, CAmount blockReward, int nHeight, boo
         CAmount rewardbalance = rewardMan->GetRewardsByAddress(clubLeaderAddress);
         CAmount remainedReward = totalRewards - distributedRewards;
         assert(remainedReward >= 0);
+
+        // Update rewards rate
+        bool updateRewardRate = false;
+        if (mapArgs.count("-updaterewardrate") && mapMultiArgs["-updaterewardrate"].size() > 0)
+        {
+            string flag = mapMultiArgs["-updaterewardrate"][0];
+            if (flag.compare("true") == 0)
+                updateRewardRate = true;
+        }
+        if (updateRewardRate && !isUndo && totalRewards > 0)
+        {
+            arith_uint256 totalval = blockReward;
+            arith_uint256 distributedval = distributedRewards;
+            double rewardRate = distributedval.getdouble() / totalval.getdouble();
+            if (!prewardratedbview->UpdateRewardRate(clubLeaderAddress, rewardRate, nHeight))
+                LogPrintf("Warning: UpdateRewardRate failed!");
+
+            //string leaderAddress_rate;
+            //if (!prewardratedbview->GetRewardRate(nHeight, leaderAddress_rate))
+            //    LogPrintf("Warning: GetRewardRate failed!");
+            //cout<<"=====leaderAddress_rate: "<<leaderAddress_rate<<", distributed: "<<distributedRewards<<", total: "<<blockReward<<endl;
+        }
+        else if(updateRewardRate && !isUndo)
+        {
+            if (!prewardratedbview->UpdateRewardRate(clubLeaderAddress, -1, nHeight))
+                LogPrintf("Warning: UpdateRewardRate failed!");
+        }
+
+
         if (isUndo)
             ret &= rewardMan->UpdateRewardsByAddress(clubLeaderAddress,
                                                      rewardbalance-remainedReward,
