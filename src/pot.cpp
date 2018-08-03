@@ -49,9 +49,8 @@ const static bool fDebugPODS = false;
 std::string getLatestBlockGenerationSignature(){
     //LOCK(cs_main);
     uint32_t nHeight = chainActive.Height();
-    //std::cout<<"current main chain height is "<<nHeight<<std::endl;
     CBlockIndex* pblockindex = chainActive[nHeight];
-    std::cout <<"hex is as follows "<<std::hex <<pblockindex->GetBlockGenerationSignature()<<std::endl;
+    LogPrintf("hex value is as follows %s\n",pblockindex->GetBlockGenerationSignature());
     return pblockindex->GetBlockGenerationSignature();
 }
 int64_t getPastTimeFromLastestBlock(){
