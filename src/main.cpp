@@ -97,8 +97,6 @@ struct EntrustInfo
     std::string father;
 };
 
-static int nHeight = 0;
-
 CFeeRate minRelayTxFee = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
 CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 
@@ -2671,27 +2669,29 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
     // Special case for the genesis block
     if (block.GetHash() == chainparams.GetConsensus().hashGenesisBlock) {
-        if (!fJustCheck)
+        if (!fJustCheck) {
             view.SetBestBlock(pindex->GetBlockHash());
 
-        long clubId;
-        for(uint i = 0; i < GENESISCOIN_CNT; i++)
-        {
-            CTxDestination address;
-            std::vector<std::string> values;
-            const CScript genesisOutputScript = CScript() << ParseHex(chainparams.GetConsensus().genesisAddr[i]) << OP_CHECKSIG;
-            ExtractDestination(genesisOutputScript, address);
-            values.push_back(CBitcoinAddress(address).ToString());
-            values.push_back("1");
-            clubId = pdb->ISNSqlInsert(tableClub, values);
+            //todo:check level>4 ,clear db
+            long clubId;
+            for(uint i = 0; i < GENESISCOIN_CNT; i++)
+            {
+                CTxDestination address;
+                std::vector<std::string> values;
+                const CScript genesisOutputScript = CScript() << ParseHex(chainparams.GetConsensus().genesisAddr[i]) << OP_CHECKSIG;
+                ExtractDestination(genesisOutputScript, address);
+                values.push_back(CBitcoinAddress(address).ToString());
+                values.push_back("1");
+                clubId = pdb->ISNSqlInsert(tableClub, values);
 
-            values.clear();
-            values.push_back(CBitcoinAddress(address).ToString());
-            values.push_back(std::to_string(clubId));
-            values.push_back("0");
-            values.push_back("1");
-            values.push_back("0");
-            pdb->ISNSqlInsert(tableMember, values);
+                values.clear();
+                values.push_back(CBitcoinAddress(address).ToString());
+                values.push_back(std::to_string(clubId));
+                values.push_back("0");
+                values.push_back("1");
+                values.push_back("0");
+                pdb->ISNSqlInsert(tableMember, values);
+            }
         }
 
         UpdateCoins(block.vtx[0], view, 0);
@@ -2804,7 +2804,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     blockundo.vtxundo.reserve(block.vtx.size() - 1);
 
     std::ofstream ofile;
-    if (nHeight != pindex->nHeight) {
+    if (!fJustCheck) {
         char fileName[16];
         snprintf(fileName, sizeof(fileName), "%09d.txt", pindex->nHeight);
         boost::filesystem::path path = GetDataDir() / "minerclub" / fileName;
@@ -2881,7 +2881,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         if (i > 0) {
             blockundo.vtxundo.push_back(CTxUndo());
 
-            if (nHeight != pindex->nHeight) {
+            if (!fJustCheck) {
                 //entrust graph, only deal with special tx
                 //extract vin's Address(which offer the most money)
                 //CTxDestination vinAddress;
@@ -2924,13 +2924,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     field.push_back(memFieldFather);
                     mysqlpp::StoreQueryResult dataSelect = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
                     if (0 == tx.vout[i].nValue) {//it's an entrust tx, get the last entrust address
-                        ofile << maxValueAddress << "    " << voutAddress << "    " << lastFatherAddress << std::endl;
-                        //bEntrustTx = true;
                         if (maxValueAddress == voutAddress) {//entrust youself
                             field.clear();
                             field.push_back(clubFieldAddress);
                             mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableClub, field, clubFieldAddress, voutAddress);
-                            if (data.empty()) {//has not entrusted
+                            if (data.empty()) {//1.entrust yourself and you are not a miner
                                 //insert a new club
                                 values.clear();
                                 values.push_back(voutAddress);
@@ -2971,13 +2969,15 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                 values.push_back(std::to_string(clubId));
                                 values.push_back(std::to_string(rootc));
                                 pdb->ISNSqlUpdate(tableMember, field, values, memFieldAddress, voutAddress);
-                            } else {//has entrusted
+                                ofile << maxValueAddress << "    " << voutAddress << "    " << "A" << std::endl;
+                            } else {//2.entrust yourself and you are a miner
                                 field.clear();
                                 field.push_back(memFieldCount);
                                 pdb->ISNSqlAddOne(tableMember, field, memFieldAddress, voutAddress);
                                 field.clear();
                                 field.push_back(clubFieldCount);
                                 pdb->ISNSqlAddOne(tableClub, field, clubFieldAddress, voutAddress);
+                                ofile << maxValueAddress << "    " << voutAddress << "    " << "B" << std::endl;
                             }
                         } else {//entrust others
                             //must entrust a miner
@@ -2985,7 +2985,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.push_back(clubFieldID);
                             field.push_back(clubFieldCount);
                             mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableClub, field, clubFieldAddress, voutAddress);
-                            if (!data.empty()) {// it is a miner
+                            if (!data.empty()) {//entrust a miner
                                 //miner data
                                 field.clear();
                                 field.push_back(memFieldID);
@@ -3015,7 +3015,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                 field.push_back(clubFieldCount);
                                 field.push_back(clubFieldAddress);
                                 mysqlpp::StoreQueryResult fatherClub = pdb->ISNSqlSelectAA(tableClub, field, clubFieldID, root[0]["club_id"].c_str());
-                                if (maxValueAddress.compare(fatherClub[0]["address"].c_str())) {//vin is not a miner
+                                if (maxValueAddress.compare(fatherClub[0]["address"].c_str())) {//3.non miner entrust a miner
                                     fatherttc = atoi(fatherClub[0]["ttc"].c_str()) - ttc;
 
                                     field.clear();
@@ -3023,9 +3023,11 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                     values.clear();
                                     values.push_back(std::to_string(fatherttc));
                                     pdb->ISNSqlUpdate(tableClub, field, values, clubFieldID, root[0]["club_id"].c_str());
-                                } else {
+                                    ofile << maxValueAddress << "    " << voutAddress << "    " << "C" << std::endl;
+                                } else {//4.one miner entrust another
                                     //delete
                                     pdb->ISNSqlDelete(tableClub, clubFieldAddress, maxValueAddress);
+                                    ofile << maxValueAddress << "    " << voutAddress << "    " << "D" << std::endl;
                                 }
 
                                 field.clear();
@@ -3035,27 +3037,27 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                 values.push_back(fatherData[0]["address_id"].c_str());
                                 values.push_back(data[0]["club_id"].c_str());
                                 pdb->ISNSqlUpdate(tableMember, field, values, memFieldAddress, maxValueAddress);
-                            } else {//it is not a miner
+                            } else {//entrust a non miner
                                 //if a new address;
                                 field.clear();
                                 field.push_back(memFieldClub);
                                 mysqlpp::StoreQueryResult fatherData = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
-                                if (!fatherData.empty()) {//an existed address
+                                if (!fatherData.empty()) {//5.entrust an existed non miner
                                     field.clear();
                                     field.push_back(memFieldCount);
                                     pdb->ISNSqlAddOne(tableMember, field, memFieldAddress, voutAddress);
                                     field.clear();
                                     field.push_back(clubFieldCount);
                                     pdb->ISNSqlAddOne(tableClub, field, clubFieldID, fatherData[0]["club_id"].c_str());
-                                } else {//a new address
+                                    ofile << maxValueAddress << "    " << voutAddress << "    " << "E" << std::endl;
+                                } else {//6.entrust a new address
                                     //do nothing
+                                    ofile << maxValueAddress << "    " << voutAddress << "    " << "F" << std::endl;
                                 }
                             }
                         }
                     } else {//  Not a entrusted tx
-                        if (dataSelect.empty()) {//a new address
-                            ofile << voutAddress << "    " << maxValueAddress << "    " << "MAGICCODE" << std::endl;
-
+                        if (dataSelect.empty()) {//7.transfer to a new address
                             field.clear();
                             field.push_back(memFieldID);
                             field.push_back(memFieldClub);
@@ -3071,7 +3073,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.clear();
                             field.push_back(clubFieldCount);
                             pdb->ISNSqlAddOne(tableClub, field, clubFieldID, data[0]["club_id"].c_str());
-                        } else {// an existed address, do not change the entrust graph
+                            ofile << maxValueAddress << "    " << voutAddress << "    " << "G" << std::endl;
+                        } else {//8.transfer to an existed address, do not change the entrust graph
                             //tc++
                             //ttc++
                             field.clear();
@@ -3083,6 +3086,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.clear();
                             field.push_back(clubFieldCount);
                             pdb->ISNSqlAddOne(tableClub, field, clubFieldID, data[0]["club_id"].c_str());
+                            ofile << maxValueAddress << "    " << voutAddress << "    " << "H" << std::endl;
                         }
                     }
                 }
@@ -3094,6 +3098,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         pos.nTxOffset += ::GetSerializeSize(tx, SER_DISK, CLIENT_VERSION);
     }
 
+    if (!fJustCheck) {
+        ofile .close();
+    }
+
     // Update rewards
     for (unsigned int j = 0; j < block.vtx.size(); j++)
     {
@@ -3101,11 +3109,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
         if (!UpdateRewards(tx, nFees, pindex->nHeight))
             return error("ConnectBlock(): UpdateRewards failed");
     }
-
-    if (nHeight != pindex->nHeight) {
-        ofile .close();
-    }
-    nHeight = pindex->nHeight;
 
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint("bench", "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs]\n", (unsigned)block.vtx.size(), 0.001 * (nTime3 - nTime2), 0.001 * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : 0.001 * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * 0.000001);
