@@ -96,6 +96,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettxoutsbyaddress", 1 },
     { "gettxoutsbyaddress", 2 },
     { "gettxoutsbyaddress", 3 },
+    { "getclubrewardrate",  0 },
+    { "getclubrewardrate",  1 },
     { "sendtransactiontoaddress", 0 },
     { "sendtransactiontoaddress", 1 },
     { "sendtransactiontoaddress", 2 },

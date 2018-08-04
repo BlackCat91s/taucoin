@@ -1346,6 +1346,58 @@ UniValue gettxoutsbyaddress(const UniValue& params, bool fHelp)
     return results;
 }
 
+UniValue getclubrewardrate(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error(
+            "getclubrewardratebyheight height\n"
+            "\nReturns mining club reward rate corresponding height.\n"
+            "\nTo use this function, you must start taucoin with the  -updaterewardrate=true parameter.\n"
+            "\nArguments:\n"
+            "1. height          (numeric) blockchain height\n"
+            "\nResult\n"
+            "{\n"
+            "  \"height\":height\n"
+            "  \"rewardrate\":leaderaddr_rate\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getclubrewardratebyheight", "6")
+            + "\nAs a json rpc call\n"
+            + HelpExampleRpc("gettxoutsbyaddress", "6")
+        );
+
+    static bool updateRewardRate = false;
+    if (!updateRewardRate)
+    {
+        if (mapArgs.count("-updaterewardrate") && mapMultiArgs["-updaterewardrate"].size() > 0)
+        {
+            std::string flag = mapMultiArgs["-updaterewardrate"][0];
+            if (flag.compare("true") == 0)
+                updateRewardRate = true;
+        }
+    }
+    if (!updateRewardRate)
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "To use this function, you must start taucoin with the -updaterewardrate=true parameter.");
+
+    RPCTypeCheck(params, boost::assign::list_of(UniValue::VNUM), false);
+
+    int height = params[0].get_int();
+
+    if (height < 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative height");
+
+    std::string leaderAddress_rate;
+    if (!prewardratedbview->GetRewardRate(height, leaderAddress_rate))
+        LogPrintf("Warning: GetRewardRate failed!");
+
+    UniValue result(UniValue::VOBJ);
+    result.push_back(Pair("height", height));
+    result.push_back(Pair("rewardrate", leaderAddress_rate));
+
+    return result;
+}
+
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
@@ -1366,6 +1418,7 @@ static const CRPCCommand commands[] =
     { "blockchain",         "gettxoutsetinfo",        &gettxoutsetinfo,        true  },
     { "blockchain",         "verifychain",            &verifychain,            true  },
     { "blockchain",         "gettxoutsbyaddress",     &gettxoutsbyaddress,     true  },
+    { "blockchain",         "getclubrewardrate",      &getclubrewardrate,      true  },
 
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
