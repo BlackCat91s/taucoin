@@ -9,7 +9,7 @@
 #include "hash.h"
 #include "serialize.h"
 #include "uint256.h"
-
+#include "util.h"
 #include <stdexcept>
 #include <vector>
 
@@ -189,6 +189,8 @@ public:
 
     //! Turn this public key into an uncompressed public key.
     bool Decompress();
+    //! Turn this public key into an compressed public key.
+    bool Compress();
 
     //! Derive BIP32 child pubkey.
     bool Derive(CPubKey& pubkeyChild, ChainCode &ccChild, unsigned int nChild, const ChainCode& cc) const;
