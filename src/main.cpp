@@ -2941,10 +2941,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
                 //if an entrustment transaction
                 //bool bEntrustTx = false;
-                std::vector<std::string> values;
                 CTxDestination address;
                 std::string voutAddress, lastFatherAddress;
-                std::vector<std::string> field, tableMemberValues, tableClubValues;
+                std::vector<std::string> field, values;
                 //string condition, cvalue;
                 for (unsigned int i = 0; i < tx.vout.size(); i++) {
                     ExtractDestinationFromP2PKAndP2PKH(tx.vout[i].scriptPubKey, address);
@@ -2967,14 +2966,9 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                 values.push_back("1");
                                 long clubId = pdb->ISNSqlInsert(tableClub, values);
                                 unsigned long rootc, fatherttc;
-                                field.clear();
-                                field.push_back(memFieldID);
-                                field.push_back(memFieldCount);
-                                field.push_back(memFieldClub);
-                                mysqlpp::StoreQueryResult root = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
-                                rootc = atoi(root[0]["tc"].c_str()) + 1;
+                                rootc = atoi(dataSelect[0]["tc"].c_str()) + 1;
                                 //update voutaddress clubid and tx++, update ttc
-                                unsigned long ttc = BreadthFirstSearch(pdb, root[0]["address_id"].c_str(), clubId);
+                                unsigned long ttc = BreadthFirstSearch(pdb, dataSelect[0]["address_id"].c_str(), clubId);
                                 field.clear();
                                 field.push_back(clubFieldCount);
                                 values.clear();
@@ -2983,14 +2977,14 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
                                 field.clear();
                                 field.push_back(clubFieldCount);
-                                mysqlpp::StoreQueryResult fatherClub = pdb->ISNSqlSelectAA(tableClub, field, clubFieldID, root[0]["club_id"].c_str());
+                                mysqlpp::StoreQueryResult fatherClub = pdb->ISNSqlSelectAA(tableClub, field, clubFieldID, dataSelect[0]["club_id"].c_str());
                                 fatherttc = atoi(fatherClub[0]["ttc"].c_str()) - ttc;
 
                                 field.clear();
                                 field.push_back(clubFieldCount);
                                 values.clear();
                                 values.push_back(std::to_string(fatherttc));
-                                pdb->ISNSqlUpdate(tableClub, field, values, clubFieldID, root[0]["club_id"].c_str());
+                                pdb->ISNSqlUpdate(tableClub, field, values, clubFieldID, dataSelect[0]["club_id"].c_str());
 
                                 field.clear();
                                 field.push_back(memFieldFather);
@@ -3018,10 +3012,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.push_back(clubFieldCount);
                             mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableClub, field, clubFieldAddress, voutAddress);
                             if (!data.empty()) {//entrust a miner
-                                //miner data
-                                field.clear();
-                                field.push_back(memFieldID);
-                                mysqlpp::StoreQueryResult fatherData = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
                                 //miner's tc++
                                 field.clear();
                                 field.push_back(memFieldCount);
@@ -3066,21 +3056,18 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                                 field.push_back(memFieldFather);
                                 field.push_back(memFieldClub);
                                 values.clear();
-                                values.push_back(fatherData[0]["address_id"].c_str());
+                                values.push_back(dataSelect[0]["address_id"].c_str());
                                 values.push_back(data[0]["club_id"].c_str());
                                 pdb->ISNSqlUpdate(tableMember, field, values, memFieldAddress, maxValueAddress);
                             } else {//entrust a non miner
                                 //if a new address;
-                                field.clear();
-                                field.push_back(memFieldClub);
-                                mysqlpp::StoreQueryResult fatherData = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
-                                if (!fatherData.empty()) {//5.entrust an existed non miner
+                                if (!dataSelect.empty()) {//5.entrust an existed non miner
                                     field.clear();
                                     field.push_back(memFieldCount);
                                     pdb->ISNSqlAddOne(tableMember, field, memFieldAddress, voutAddress);
                                     field.clear();
                                     field.push_back(clubFieldCount);
-                                    pdb->ISNSqlAddOne(tableClub, field, clubFieldID, fatherData[0]["club_id"].c_str());
+                                    pdb->ISNSqlAddOne(tableClub, field, clubFieldID, dataSelect[0]["club_id"].c_str());
                                     ofile << maxValueAddress << "    " << voutAddress << "    " << "E" << std::endl;
                                 } else {//6.entrust a new address
                                     //do nothing
@@ -3094,13 +3081,13 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.push_back(memFieldID);
                             field.push_back(memFieldClub);
                             mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, maxValueAddress);
-                            tableMemberValues.clear();
-                            tableMemberValues.push_back(voutAddress);
-                            tableMemberValues.push_back(data[0]["club_id"].c_str());
-                            tableMemberValues.push_back(data[0]["address_id"].c_str());
-                            tableMemberValues.push_back("1");
-                            tableMemberValues.push_back("0");
-                            pdb->ISNSqlInsert(tableMember, tableMemberValues);
+                            values.clear();
+                            values.push_back(voutAddress);
+                            values.push_back(data[0]["club_id"].c_str());
+                            values.push_back(data[0]["address_id"].c_str());
+                            values.push_back("1");
+                            values.push_back("0");
+                            pdb->ISNSqlInsert(tableMember, values);
                             //ttc++ depend on clubid
                             field.clear();
                             field.push_back(clubFieldCount);
@@ -3111,13 +3098,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             field.clear();
                             field.push_back(memFieldCount);
                             pdb->ISNSqlAddOne(tableMember, field, memFieldAddress, voutAddress);
-                            field.clear();
-                            field.push_back(memFieldClub);
-                            mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
                             //ttc++
                             field.clear();
                             field.push_back(clubFieldCount);
-                            pdb->ISNSqlAddOne(tableClub, field, clubFieldID, data[0]["club_id"].c_str());
+                            pdb->ISNSqlAddOne(tableClub, field, clubFieldID, dataSelect[0]["club_id"].c_str());
                             ofile << maxValueAddress << "    " << voutAddress << "    " << "H" << std::endl;
                         }
                     }
