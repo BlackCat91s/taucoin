@@ -100,7 +100,7 @@ UniValue generateBlocksWithPot(boost::shared_ptr<CReserveScript> coinbaseScript,
      }
      UniValue blockHashes(UniValue::VARR);
 
-     while (nHeight < nHeightEnd)
+     while (nHeight < nHeightEnd && !ShutdownRequested())
      {
          CBlockIndex *prevIndex = NULL;
          {
