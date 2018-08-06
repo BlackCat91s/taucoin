@@ -4118,6 +4118,10 @@ bool CheckProofOfTransaction(const CBlockHeader& block, CValidationState& state,
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW,
         CBlockIndex* pindexPrev)
 {
+    if (block.GetHash() == consensusParams.hashGenesisBlock)
+    {
+        return true;
+    }
 
     {
      LOCK(cs_main);
