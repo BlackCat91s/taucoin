@@ -2950,8 +2950,10 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     ExtractDestinationFromP2PKAndP2PKH(tx.vout[i].scriptPubKey, address);
                     voutAddress = CBitcoinAddress(address).ToString();
                     field.clear();
+                    field.push_back(memFieldID);
                     field.push_back(memFieldClub);
                     field.push_back(memFieldFather);
+                    field.push_back(memFieldCount);
                     mysqlpp::StoreQueryResult dataSelect = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
                     if (0 == tx.vout[i].nValue) {//it's an entrust tx, get the last entrust address
                         if (maxValueAddress == voutAddress) {//entrust youself
@@ -3106,13 +3108,13 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                             ofile << maxValueAddress << "    " << voutAddress << "    " << "G" << std::endl;
                         } else {//8.transfer to an existed address, do not change the entrust graph
                             //tc++
-                            //ttc++
                             field.clear();
                             field.push_back(memFieldCount);
                             pdb->ISNSqlAddOne(tableMember, field, memFieldAddress, voutAddress);
                             field.clear();
                             field.push_back(memFieldClub);
                             mysqlpp::StoreQueryResult data = pdb->ISNSqlSelectAA(tableMember, field, memFieldAddress, voutAddress);
+                            //ttc++
                             field.clear();
                             field.push_back(clubFieldCount);
                             pdb->ISNSqlAddOne(tableClub, field, clubFieldID, data[0]["club_id"].c_str());
@@ -4105,10 +4107,10 @@ bool CheckProofOfTransaction(const CBlockHeader& block, CValidationState& state,
     assert(pindexPrev);
 
     PotErr error;
-    if (!CheckProofOfTransaction(pindexPrev->generationSignature, block.pubKeyOfpackager,
-                pindexPrev->nHeight + 1, block.nTime - pindexPrev->nTime, block.baseTarget, consensusParams, error)) {
-        return state.DoS(50, false, REJECT_INVALID, "high-hit", false, "proof of tx failed");
-    }
+//    if (!CheckProofOfTransaction(pindexPrev->generationSignature, block.pubKeyOfpackager,
+//                pindexPrev->nHeight + 1, block.nTime - pindexPrev->nTime, block.baseTarget, consensusParams, error)) {
+//        return state.DoS(50, false, REJECT_INVALID, "high-hit", false, "proof of tx failed");
+//    }
 
     return true;
 }
