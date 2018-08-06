@@ -4093,6 +4093,11 @@ bool CheckProofOfTransaction(const CBlockHeader& block, CValidationState& state,
 {
     LOCK(cs_main);
 
+    if (block.GetHash() == consensusParams.hashGenesisBlock)
+    {
+        return true;
+    }
+
     // Firstly if pindexLast equals NULL, get it from mapBlockIndex.
     // If not exist, return error.
     if (!pindexPrev) {
