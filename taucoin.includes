@@ -1,7 +1,6 @@
 src
 src/bench
 src/compat
-src/config
 src/consensus
 src/crypto
 src/crypto/ctaes
@@ -12,11 +11,9 @@ src/leveldb/port
 src/leveldb/port/win
 src/leveldb/table
 src/leveldb/util
-src/obj
 src/policy
 src/primitives
 src/qt
-src/qt/forms
 src/qt/test
 src/rpc
 src/script
@@ -30,8 +27,6 @@ src/secp256k1/src/modules/schnorr
 src/support
 src/support/allocators
 src/test
-src/test/data
-src/univalue
 src/univalue/include
 src/univalue/lib
 src/wallet
