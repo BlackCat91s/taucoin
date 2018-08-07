@@ -76,7 +76,8 @@ uint256 getPotHash(std::string generationSignature,std::string pubKey){
 
 std::string raiseGenerationSignature(std::string pukstr){
     std::string pSignature = getLatestBlockGenerationSignature();
-    CPubKey pubkey(pukstr.begin(), pukstr.end());
+    std::vector<unsigned char> bytes = ParseHex(pukstr);
+    CPubKey pubkey(bytes);
     std::string strPubKey;
     if (pubkey.IsCompressed() && pubkey.Decompress()) {
         strPubKey = HexStr(ToByteVector(pubkey));
@@ -88,7 +89,8 @@ std::string raiseGenerationSignature(std::string pukstr){
 }
 
 bool verifyGenerationSignature(std::string pGS,std::string generationSignature,std::string pukstr){
-    CPubKey pubkey(pukstr.begin(), pukstr.end());
+    std::vector<unsigned char> bytes = ParseHex(pukstr);
+    CPubKey pubkey(bytes);
     std::string strPubKey;
     if (pubkey.IsCompressed() && pubkey.Decompress()) {
         strPubKey = HexStr(ToByteVector(pubkey));
@@ -208,7 +210,8 @@ bool CheckProofOfTransaction(const std::string& prevGenerationSignature, const s
 
     // Note: in block header public key is compressed, but get hit value with uncompressed
     // public key. So here firstly, we decompress publickey.
-    CPubKey pubkey(currPubKey.begin(), currPubKey.end());
+    std::vector<unsigned char> bytes = ParseHex(currPubKey);
+    CPubKey pubkey(bytes);
     std::string strPubKey;
     if (pubkey.IsCompressed() && pubkey.Decompress()) {
         strPubKey = HexStr(ToByteVector(pubkey));
@@ -220,7 +223,7 @@ bool CheckProofOfTransaction(const std::string& prevGenerationSignature, const s
     uint64_t hit = calculateHitOfPOT(geneSignatureHash);
     std::string strAddr;
 
-    if (!ConvertPubkeyToAddress(currPubKey, strAddr) || strAddr.empty()) {
+    if (!ConvertPubkeyToAddress(strPubKey, strAddr) || strAddr.empty()) {
         LogPrintf("CheckProofOfTransaction failed, get strAddr fail\n");
         checkErr = POT_ADDR_ERR;
         return false;

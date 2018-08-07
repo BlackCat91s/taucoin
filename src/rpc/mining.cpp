@@ -100,7 +100,7 @@ UniValue generateBlocksWithPot(boost::shared_ptr<CReserveScript> coinbaseScript,
      }
      UniValue blockHashes(UniValue::VARR);
 
-     while (nHeight < nHeightEnd)
+     while (nHeight < nHeightEnd && !ShutdownRequested())
      {
          CBlockIndex *prevIndex = NULL;
          {
@@ -250,7 +250,10 @@ UniValue generatetoaddress(const UniValue& params, bool fHelp)
     }
 
     coinbaseScript->Packagerpubkey = pubkey;
+    if(pubkey.Compress()){
     coinbaseScript->pubkeyString = HexStr(ToByteVector(pubkey));
+    LogPrintf("pubkey is like this :%s\n", coinbaseScript->pubkeyString);
+    }
 
     return generateBlocksWithPot(coinbaseScript, nGenerate, nMaxTries, false);
 }

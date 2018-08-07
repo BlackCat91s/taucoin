@@ -51,6 +51,23 @@ CAmount RewardManager::GetRewardsByAddress(std::string& address)
     }
 }
 
+uint64_t RewardManager::GetTxCountByAddress(std::string& address)
+{
+	std::vector<string> fields;
+	fields.push_back(memFieldCount);
+	mysqlpp::StoreQueryResult bLocal = backendDb->ISNSqlSelectAA(tableMember, fields, memFieldAddress, address);
+
+    if (bLocal.num_rows() > 0)
+    {
+	    return bLocal[0][memFieldCount.c_str()];
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+
 bool RewardManager::UpdateRewardsByAddress(std::string& address, CAmount newRewards, CAmount oldReward)
 {
     if (newRewards == oldReward)

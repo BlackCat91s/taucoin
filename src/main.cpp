@@ -4077,6 +4077,11 @@ bool CheckProofOfTransaction(const CBlockHeader& block, CValidationState& state,
 {
     LOCK(cs_main);
 
+    if (block.GetHash() == consensusParams.hashGenesisBlock)
+    {
+        return true;
+    }
+
     // Firstly if pindexLast equals NULL, get it from mapBlockIndex.
     // If not exist, return error.
     if (!pindexPrev) {
@@ -4102,6 +4107,10 @@ bool CheckProofOfTransaction(const CBlockHeader& block, CValidationState& state,
 bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW,
         CBlockIndex* pindexPrev)
 {
+    if (block.GetHash() == consensusParams.hashGenesisBlock)
+    {
+        return true;
+    }
 
     {
      LOCK(cs_main);
