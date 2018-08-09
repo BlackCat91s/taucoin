@@ -215,6 +215,10 @@ UniValue generatetoaddress(const UniValue& params, bool fHelp)
             "\nGenerate 11 blocks to myaddress\n"
             + HelpExampleCli("generatetoaddress", "11 \"myaddress\"")
         );
+    {
+        if (fImporting || fReindex)
+            throw JSONRPCError(RPC_TYPE_ERROR, "Is reindexing or importing, not allow to forge");
+    }
 
     int nGenerate = params[0].get_int();
     uint64_t nMaxTries = 1000000;
