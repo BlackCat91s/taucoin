@@ -21,7 +21,7 @@ using namespace std;
 const char DBName[32]= "taureward";
 const char hostName[32]= "localhost";
 const char userName[32]= "root";
-const char passWord[32]= "Root1122!!@@";
+const char passWord[32]= "123456";
 
 //Table info
 const string tableClub= "clubinfo";
@@ -51,6 +51,7 @@ public:
 	// update ISNDB with condition
 	mysqlpp::SimpleResult ISNSqlUpdate(const string &tablename, const vector<string> &field, const vector<string> &values, const string &condition, const string &cvalue);
 	mysqlpp::SimpleResult ISNSqlAddOne(const string &tablename, const vector<string> &field, const string &condition, const string &cvalue);
+    mysqlpp::SimpleResult ISNSqlMinusOne(const string &tablename, const vector<string> &field, const string &condition, const string &cvalue);
 
 	// insert ISNDB with condition
     long ISNSqlInsert(const string &tablename, const vector<string> &values);
