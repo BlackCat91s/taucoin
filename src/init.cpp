@@ -587,6 +587,9 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 
     // -reindex
     if (fReindex) {
+        // First of all, remove mysql db records
+        ISNDB::GetInstance()->TruncateTables();
+
         int nFile = 0;
         while (true) {
             CDiskBlockPos pos(nFile, 0);
@@ -1050,6 +1053,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.InitMessage.connect(SetRPCWarmupStatus);
         if (!AppInitServers(threadGroup))
             return InitError(_("Unable to start HTTP server. See debug log for details."));
+    }
+
+    if (!ISNDB::BootupPreCheck())
+    {
+        return InitError(_("Please specify mysql username and password by -mysqlusername and -mysqlpassword."));
     }
 
     // Here start ISNDB service ASAP
