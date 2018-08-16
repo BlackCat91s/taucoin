@@ -2586,7 +2586,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
         }
     }
     else {
-        std::cout << "Error opening file!" << std::endl;
+        return error("DisconnectBlock(): open file failed");
     }
     ifile.close();
 
@@ -2760,7 +2760,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
             break;
         }
         default:
-            std::cout << "What the fuck is it!!!" << std::endl;
+            LogPrint("undo_relationship", "unknown type\n");
             break;
         };
     }
