@@ -2580,7 +2580,6 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
     if(ifile.is_open()){
         ifile >> tx.vin >> tx.vout >> tx.lastFather >> tx.flag;
         while(ifile.good()){
-            std::cout << tx.vin << "  " << tx.vout << "  " << tx.lastFather << "  " << tx.flag << std::endl;
             vecTxInfo.push_back(tx);
             ifile >> tx.vin >> tx.vout >> tx.lastFather >> tx.flag;
         }
