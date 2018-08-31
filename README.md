@@ -4,7 +4,7 @@ https://www.taucoin.io
 
 Why Tau?
 ----------------
-TAU is the answer to Bitcoin’s lack of economic activity. It’s proven to be a great store of value but has not been able to jump into “medium of exchange”. With the innovation of Proof-of-Transactions, users are incentivized to make more transactions and increase circulation by receiving the block reward.
+TAU proposes a fast circulation currency without inflation. Users collectively grow and secure the network by doing essential behavior - transactions. With the technology innovation of "Proof Of Transaction", users with transaction history are rewarded by sharing the future block reward. No advantage is for concentrating wealth and hardware such as in POS and POW. Low barrier to get coins and rewarding to daily commoners behavior are TAU implementation of fairness.
 
 For more information, you can read the
 [original whitepaper](https://www.taucoin.io/whitePaper/TAU%20White%20Paper%20v0.1.pdf).
