@@ -3132,7 +3132,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     CTxDestination address;
                     std::string voutAddress;
                     std::vector<std::string> field, values;
-                    //string condition, cvalue;
                     for (unsigned int i = 0; i < tx.vout.size(); i++) {
                         if (ExtractDestinationFromP2PKAndP2PKH(tx.vout[i].scriptPubKey, address)) {
                             voutAddress = CBitcoinAddress(address).ToString();
